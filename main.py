@@ -21,7 +21,7 @@ if __name__ == "__main__":
 
     #SensorLayoutResults
     # for sim in range(10):
-    results = leak_sim.run_sim()
+    results = leak_sim.run_leak_sim()
 
     results.pressure.to_csv()
     # results.demand
