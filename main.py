@@ -14,9 +14,12 @@ if __name__ == "__main__":
                                        "JUNCTION-68",
                                        "JUNCTION-79",
                                        "JUNCTION-122"),
-                                number_of_processes=20,
+                                number_of_processes=20
                                 )
-                                
+    
+    wn.set_report_options(input_report_options=("P"), 
+                          output_report_options=("ID", "Leak Area", "Start Time"))
+
     leak_sim = WaterNetworkLeakSimulations(wn, 10)
 
     #SensorLayoutResults
