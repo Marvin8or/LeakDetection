@@ -13,8 +13,8 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
         self.layout = layout
         self._sensor_node_reg = OrderedDict(((sensor_name, self.nodes._data[sensor_name]) for sensor_name in self.layout))
         self.num_sensors = len(self._sensor_node_reg)
-        self._report_options = {"input_report_options": ("Pressure", "Demand"), 
-                                           "output_report_options": ("ID", "Leak Area", "Start Time")}
+        self._report_variables = {"input_report_variables": ("Pressure", "Demand"), 
+                                    "output_report_variables": ("ID", "Leak Area", "Start Time")}
 
     @property
     def sensors(self):
@@ -22,16 +22,23 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
         return self._sensor_node_reg
 
     @property
-    def report_options(self):
+    def report_variables(self):
         #NOTE Description
-        return self._report_options
+        return self._report_variables
 
-    def set_report_options(self, *, input_report_options: tuple, output_report_options: tuple):
 
-        if(len(input_report_options) != 0 and len(output_report_options) != 0):
-            self._report_options.clear()
-            self._report_options["input_report_options"] = input_report_options
-            self._report_options["output_report_options"] = output_report_options
+    # NOTE The user can't ommit ID as parameter
+    # output_report_options
+    # >>> ('ID', 'Leak Area', 'Start Time')
+    # >>> ('ID', 'Leak Area')
+    # >>> ('ID', 'Start Time')
+    # >>> ('ID')
+    def set_report_variables(self, *, input_report_variables: tuple, output_report_variables: tuple):
+
+        if(len(input_report_variables) != 0 and len(output_report_variables) != 0):
+            self._report_variables.clear()
+            self._report_variables["input_report_variables"] = input_report_variables
+            self._report_variables["output_report_options"] = output_report_variables
 
         
         
