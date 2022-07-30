@@ -13,6 +13,7 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
         self.layout = layout
         self._sensor_node_reg = OrderedDict(((sensor_name, self.nodes._data[sensor_name]) for sensor_name in self.layout))
         self.num_sensors = len(self._sensor_node_reg)
+
         self._report_variables = {"input_report_variables": ("Pressure", "Demand"), 
                                     "output_report_variables": ("ID", "Leak Area", "Start Time")}
 
@@ -33,12 +34,20 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
     # >>> ('ID', 'Leak Area')
     # >>> ('ID', 'Start Time')
     # >>> ('ID')
+    # >>> ('Leak Area', 'Start Time')
+    # ... ('ID', 'Leak Area', 'Start Time')
     def set_report_variables(self, *, input_report_variables: tuple, output_report_variables: tuple):
 
         if(len(input_report_variables) != 0 and len(output_report_variables) != 0):
             self._report_variables.clear()
-            self._report_variables["input_report_variables"] = input_report_variables
-            self._report_variables["output_report_options"] = output_report_variables
+
+            #TODO When input_report_variables has len > 1 guves error
+
+            self._report_variables["input_report_variables"] = tuple([input_report_variables])
+            if("ID" not in output_report_variables):
+                self._report_variables["output_report_variables"] = ("ID", *output_report_variables)
+            else:
+                self._report_variables["output_report_variables"] = tuple([*output_report_variables])
 
         
         

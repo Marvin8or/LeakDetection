@@ -8,6 +8,7 @@ from src.data.leak_simulations import WaterNetworkLeakSimulations
 if __name__ == "__main__":
     inp_file = 'LeakDetection/networks/Example_1.inp'
 
+
     wn = WaterNetworkLeakModel(inp_file, 
                                layout=("JUNCTION-17",
                                        "JUNCTION-21",
@@ -17,7 +18,10 @@ if __name__ == "__main__":
                                 number_of_processes=20
                                 )
     
-    wn.set_report_variables(input_report_variables=("P"), 
+
+    user_report_variables = {"input_report_variables": {"Pressure"},
+                             "output_report_variables": {"ID", "Leak Area", "Start Time"}}
+    wn.set_report_variables(input_report_variables=("Pressure"), 
                             output_report_variables=("ID", "Leak Area", "Start Time"))
 
     leak_sim = WaterNetworkLeakSimulations(wn, 10)

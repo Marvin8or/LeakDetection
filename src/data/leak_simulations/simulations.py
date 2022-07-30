@@ -21,11 +21,19 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
         self.wn = wn
         self.simulations_per_process = simulations_per_process
 
+        # XXX Hardcoded
+        self.wn.options.time.duration = 24 * 3600
+        self.wn.options.time.hydraulic_timestep = 5 * 60
+        self.wn.options.time.report_timestep = 5 * 60
+        self.wn.options.hydraulic.demand_model = "PDD"
+        self.wn.options.hydraulic.required_pressure = 15 # m H2O
+        self.wn.options.hydraulic.minimum_pressure = 0
+
     def _initialize_internal_datasets(self):
         #NOTE Description
-        _columns = len(self.wn.report_options["input_report_options"]) * len(self.wn.sensors) \
+        _columns = int(len(self.wn._report_variables["input_report_variables"]) * len(self.wn.sensors) \
                 * (self.wn.options.time.duration // self.wn.options.time.report_timestep \
-                + 1) + len(self.wn.report_options["output_report_options"])
+                + 1) + len(self.wn._report_variables["output_report_variables"]))
 
         _rows = self.simulations_per_process
 
@@ -53,16 +61,33 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
         ... 13:25
         """
         # get random node to be leak node
-        
-        pipes_ID_and_diameter = {link_name: self.wn.get_link(link_name).diameter for link_name in self.wn.links.pipe_names}
+        pipes_ID_and_diameter = {link_name: np.round(self.wn.get_link(link_name).diameter, 4) for link_name in self.wn.links.pipe_names}
 
-        #XXX doesnt work
-        random_pipe = np.random.choice(pipes_ID_and_diameter.keys)
-        # self.wn.report_variables
+        random_pipe_name = np.random.choice(list(pipes_ID_and_diameter.keys()))
+        random_pipe_obj = self.wn.get_link(random_pipe_name)
 
-        pass
+        # XXX cant be hardcoded
+        leak_area_perc = np.round(np.random.uniform(0, 0.8), 4)
+        leak_diameter = random_pipe_obj.diameter * leak_area_perc
 
-        # yield _output_variables:tuple
+        # XXX also not hardcoded rounding
+        leak_area = np.round(np.pi * (pipes_ID_and_diameter[random_pipe_name] / 2) ** 2, 6)
+
+        self.wn = wntr.morph.split_pipe(
+            self.wn, random_pipe_name, random_pipe_name + "_B", random_pipe_name + "_leak_node"
+        )
+
+        duration = self.wn.options.time.duration
+        time_of_failure = np.round(np.random.uniform(0, duration / 3600, 1)[0], 4)
+        leak_node = self.wn.get_node(random_pipe_name + "_leak_node")
+        leak_node.add_leak(
+            self.wn,
+            area=leak_area,
+            start_time=time_of_failure * 3600,
+        )
+        leak_node.leak_start_time = time_of_failure
+
+        yield leak_node
 
         
 
@@ -76,6 +101,7 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
         _output_vars = self._get_random_output_variables()
         for simulation_index in range(self.simulations_per_process):
 
-            _ID, _leak_area, _start_time = next(_output_vars)
-            pass
+            _leak_node = next(_output_vars)
+            sim = wntr.sim.WNTRSimulator(self.wn)
+            results = sim.run_sim()
 
