@@ -21,14 +21,6 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
         self.wn = wn
         self.simulations_per_process = simulations_per_process
 
-        # XXX Hardcoded
-        self.wn.options.time.duration = 24 * 3600
-        self.wn.options.time.hydraulic_timestep = 5 * 60
-        self.wn.options.time.report_timestep = 5 * 60
-        self.wn.options.hydraulic.demand_model = "PDD"
-        self.wn.options.hydraulic.required_pressure = 15 # m H2O
-        self.wn.options.hydraulic.minimum_pressure = 0
-
     def _initialize_internal_datasets(self):
         #NOTE Description
         _columns = int(len(self.wn._report_variables["input_report_variables"]) * len(self.wn.sensors) \
