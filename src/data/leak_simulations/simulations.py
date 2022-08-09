@@ -82,7 +82,7 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
         yield leak_node
 
         
-
+    
     def run_leak_sim(self):
         #NOTE Description
         _initial_dataset = self._initialize_internal_datasets()
