@@ -1,5 +1,3 @@
-
-import wntr
 from src.data.water_network_model import WaterNetworkLeakModel
 from src.data.leak_simulations import WaterNetworkLeakSimulations
 
