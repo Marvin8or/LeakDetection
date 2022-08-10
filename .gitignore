@@ -85,3 +85,7 @@ target/
 
 # Mypy cache
 .mypy_cache/
+
+
+# Pickle files created by running the WNTR simulations
+pickle_files/.*pickle

@@ -1,12 +1,8 @@
 
-
-
-from email import generator
 import os
 from pathlib import Path
 import pickle
 from collections import OrderedDict
-from tokenize import generate_tokens
 import wntr
 import pandas as pd
 import numpy as np
@@ -23,9 +19,9 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
 
     def _initialize_internal_datasets(self):
         #NOTE Description
-        _columns = int(len(self.wn._report_variables["input_report_variables"]) * len(self.wn.sensors) \
-                * (self.wn.options.time.duration // self.wn.options.time.report_timestep \
-                + 1) + len(self.wn._report_variables["output_report_variables"]))
+        _columns = int(len(self.wn.stored_data_features["input_report_variables"]) * len(self.wn.sensors) \
+                    * (self.wn.options.time.duration // self.wn.options.time.report_timestep + 1) \
+                    + len(self.wn.stored_data_features["output_report_variables"]))
 
         _rows = self.simulations_per_process
 
@@ -35,7 +31,7 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
     def increment_simulation_ID():
         WaterNetworkLeakSimulations._simulation_ID += 1
 
-    def _get_random_output_variables(self) -> generator:
+    def _get_random_output_variables(self):
         """
         Returns ID of pipe, Leak Area or Start Time based
         on ther wn.output_report_variables defined by the user
@@ -53,17 +49,15 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
         ... 13:25
         """
         # get random node to be leak node
-        pipes_ID_and_diameter = {link_name: np.round(self.wn.get_link(link_name).diameter, 4) for link_name in self.wn.links.pipe_names}
-
-        random_pipe_name = np.random.choice(list(pipes_ID_and_diameter.keys()))
+        random_pipe_name = np.random.choice(list(self.wn.pipes_ID_and_diameter.keys()))
         random_pipe_obj = self.wn.get_link(random_pipe_name)
 
         # XXX cant be hardcoded
         leak_area_perc = np.round(np.random.uniform(0, 0.8), 4)
-        leak_diameter = random_pipe_obj.diameter * leak_area_perc
+        leak_diameter = np.round(random_pipe_obj.diameter * leak_area_perc, 4)
 
-        # XXX also not hardcoded rounding
-        leak_area = np.round(np.pi * (pipes_ID_and_diameter[random_pipe_name] / 2) ** 2, 6)
+        # XXX the rounding number also not hardcoded
+        leak_area = np.round(np.pi * (leak_diameter / 2) ** 2, 6)
 
         self.wn = wntr.morph.split_pipe(
             self.wn, random_pipe_name, random_pipe_name + "_B", random_pipe_name + "_leak_node"
@@ -87,7 +81,7 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
         #NOTE Description
         _initial_dataset = self._initialize_internal_datasets()
 
-        with open(Path(os.getcwd(), "pickle_files", f"simulation_{self._simulation_ID}.pickle"), "wb") as pickleObj:
+        with open(Path(os.getcwd(), "LeakDetection", "pickle_files", f"simulation_{self._simulation_ID}.pickle"), "wb") as pickleObj:
             pickle.dump(self.wn, pickleObj)
 
         _output_vars = self._get_random_output_variables()

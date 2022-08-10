@@ -35,7 +35,9 @@ if __name__ == "__main__":
                                 )
     
 
-    leak_sim = WaterNetworkLeakSimulations(wn, 10)
+    leak_sim = WaterNetworkLeakSimulations(wn, 
+                                simulations_per_process=10
+                                )
 
     #SensorLayoutResults
     # for sim in range(10):
