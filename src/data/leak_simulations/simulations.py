@@ -42,7 +42,7 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
         >>> output_variables: generator = _get_random_output_variables()
         >>> _ID, _leak_area, _start_time = next(output_variables)
         >>> _ID
-        ... JUNCTION-5
+        ... LINK-5
         >>> _leak_area
         ... 0.75
         >>> _start_time

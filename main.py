@@ -16,8 +16,8 @@ if __name__ == "__main__":
     
     "time": {                    
         "duration": 24 * 3600, 
-        "hydraulic_timestep": 5 * 60,
-        "report_timestep": 5 * 60
+        "hydraulic_timestep": 60 * 60,
+        "report_timestep": 60 * 60
             },
 
     "hydraulic": {
