@@ -1,11 +1,12 @@
-
 import os
-from pathlib import Path
 import pickle
-from collections import OrderedDict
 import wntr
+import re
 import pandas as pd
+from pathlib import Path
 import numpy as np
+
+
 
 class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
     #NOTE Description
@@ -26,6 +27,38 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
         _rows = self.simulations_per_process
 
         return np.empty(shape=(_rows, _columns))
+
+    def _arange_dataset_features(self, dataset_to_fill, index, results, leak_node) -> None:
+        
+        _, _columns = np.shape(dataset_to_fill)
+
+        # ID, A, ST, ...S1P, ...S1D, ...S2P, ...S2D, ...S3P, ...S3D, ...
+        aranged_simulation_results = np.empty(shape=_columns)
+
+        output_report_variables_values = np.array([])
+
+        # ID must always be specified
+        _ID = float(re.search(r'\d+', leak_node.name).group())
+
+        tmp_dict = {"ID": _ID,
+                    "Leak Area": leak_node._leak_area,
+                    "Start Time": leak_node._leak_start_time}
+
+        # Append output parameters 
+        for param in self.wn.stored_data_features["output_report_variables"]:
+            if param in tmp_dict:
+                output_report_variables_values = np.append(output_report_variables_values, tmp_dict[param])
+
+        #Append input parameters
+        for sensor in self.wn.sensors:
+            # Sensor 1
+            for input_report_variable in self.wn.stored_data_features["input_report_variables"]:
+                # "Pressure", "Demand"
+                input_report_variable = input_report_variable.lower()
+                output_report_variables_values = np.append(output_report_variables_values, results.node[input_report_variable][sensor])
+
+        np.copyto(dataset_to_fill[index], output_report_variables_values)
+
 
     @staticmethod
     def increment_simulation_ID():
@@ -71,7 +104,7 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
             area=leak_area,
             start_time=time_of_failure * 3600,
         )
-        leak_node.leak_start_time = time_of_failure
+        leak_node._leak_start_time = time_of_failure
 
         yield leak_node
 
@@ -90,4 +123,11 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
             _leak_node = next(_output_vars)
             sim = wntr.sim.WNTRSimulator(self.wn)
             results = sim.run_sim()
+            self._arange_dataset_features(_initial_dataset, simulation_index, results, _leak_node)
+            
+
+
+
+
+            
 

@@ -10,7 +10,7 @@ if __name__ == "__main__":
     "sensors": ["JUNCTION-17", "JUNCTION-21", "JUNCTION-68", "JUNCTION-79", "JUNCTION-122"],
 
     "stored_data_features": {               
-        "input_report_variables": "Pressure",
+        "input_report_variables": ["Pressure", "Demand"],
         "output_report_variables": ["ID", "Leak Area", "Start Time"]
                 },
     
@@ -38,7 +38,6 @@ if __name__ == "__main__":
                                 )
 
     #SensorLayoutResults
-    # for sim in range(10):
     results = leak_sim.run_leak_sim()
 
     results.pressure.to_csv()

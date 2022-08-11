@@ -50,7 +50,7 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
         return self._pipes_ID_and_diameter
 
 
-    def _set_stored_data_features(self, user_options:dict):
+    def _set_stored_data_features(self, user_options: dict):
         for _option in user_options["stored_data_features"]:
             self._stored_data_features[_option] = list()
             if "out" in user_options["stored_data_features"][_option] and "ID" not in user_options["stored_data_features"][_option]:
@@ -61,7 +61,7 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
                 elif isinstance(user_options["stored_data_features"][_option], list):
                     self._stored_data_features[_option] += user_options["stored_data_features"][_option]
 
-    def _set_sensors(self, user_options:dict):
+    def _set_sensors(self, user_options: dict):
         if len(user_options["sensors"]) == 0:
             raise SyntaxError("Sensor locations must be specified!")
         else:
@@ -70,7 +70,7 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
                 self.num_sensors += 1
 
 
-    def _set_parent_class_options(self, user_options:dict):
+    def _set_parent_class_options(self, user_options: dict):
         for _option_type in user_options:
             if _option_type in dict(self.options).keys() and len(user_options[_option_type]) != 0:
                 for _option in user_options[_option_type]:
