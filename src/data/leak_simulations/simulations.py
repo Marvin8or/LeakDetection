@@ -64,7 +64,7 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
     def increment_simulation_ID():
         WaterNetworkLeakSimulations._simulation_ID += 1
 
-    def _get_random_output_variables(self):
+    def _get_random_output_variables(self) -> Node:
         """
         Returns ID of pipe, Leak Area or Start Time based
         on ther wn.output_report_variables defined by the user
@@ -72,13 +72,13 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
         Intended use:
         >>> self.wn.output_report_variables
         ... ("ID", "Leak Area", "Start Time")
-        >>> output_variables: generator = _get_random_output_variables()
-        >>> _ID, _leak_area, _start_time = next(output_variables)
+        >>> _leak_node = _get_random_output_variables()
+        >>> _ID = _leak_node.name
         >>> _ID
         ... LINK-5
-        >>> _leak_area
+        >>> _leak_node._leak_area
         ... 0.75
-        >>> _start_time
+        >>> _leak_node._start_time
         ... 13:25
         """
         # get random node to be leak node
@@ -106,7 +106,7 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
         )
         leak_node._leak_start_time = time_of_failure
 
-        yield leak_node
+        return leak_node
 
         
     
@@ -117,10 +117,10 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
         with open(Path(os.getcwd(), "LeakDetection", "pickle_files", f"simulation_{self._simulation_ID}.pickle"), "wb") as pickleObj:
             pickle.dump(self.wn, pickleObj)
 
-        _output_vars = self._get_random_output_variables()
         for simulation_index in range(self.simulations_per_process):
 
-            _leak_node = next(_output_vars)
+            # FIXME Generator doesnt work after second iteration
+            _leak_node = self._get_random_output_variables()
             sim = wntr.sim.WNTRSimulator(self.wn)
             results = sim.run_sim()
             self._arange_dataset_features(_initial_dataset, simulation_index, results, _leak_node)
