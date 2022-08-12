@@ -2,9 +2,9 @@ import os
 import pickle
 import wntr
 import re
-import pandas as pd
 from pathlib import Path
 import numpy as np
+# import pandas as pd
 
 
 
@@ -33,8 +33,6 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
         _, _columns = np.shape(dataset_to_fill)
 
         # ID, A, ST, ...S1P, ...S1D, ...S2P, ...S2D, ...S3P, ...S3D, ...
-        aranged_simulation_results = np.empty(shape=_columns)
-
         output_report_variables_values = np.array([])
 
         # ID must always be specified
@@ -64,7 +62,7 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
     def increment_simulation_ID():
         WaterNetworkLeakSimulations._simulation_ID += 1
 
-    def _get_random_output_variables(self) -> Node:
+    def _get_random_output_variables(self):
         """
         Returns ID of pipe, Leak Area or Start Time based
         on ther wn.output_report_variables defined by the user
@@ -108,8 +106,8 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
 
         return leak_node
 
-        
-    
+
+    # @concurent_function
     def run_leak_sim(self):
         #NOTE Description
         _initial_dataset = self._initialize_internal_datasets()
@@ -119,13 +117,16 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
 
         for simulation_index in range(self.simulations_per_process):
 
-            # FIXME Generator doesnt work after second iteration
             _leak_node = self._get_random_output_variables()
+
             sim = wntr.sim.WNTRSimulator(self.wn)
+
             results = sim.run_sim()
             self._arange_dataset_features(_initial_dataset, simulation_index, results, _leak_node)
-            
+            with open(Path(os.getcwd(), "LeakDetection", "pickle_files", f"simulation_{self._simulation_ID}.pickle"), "rb",) as pickleObj:
+                self.wn = pickle.load(pickleObj)
 
+        return _initial_dataset
 
 
 
