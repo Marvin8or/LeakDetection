@@ -90,3 +90,7 @@ target/
 # Pickle files created by running the WNTR simulations
 pickle_files/*
 !pickle_files/.gitkeep
+
+# All created datasets
+data/raw/*
+!data/raw/.gitkeep

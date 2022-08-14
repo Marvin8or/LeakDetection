@@ -62,6 +62,31 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
     def increment_simulation_ID():
         WaterNetworkLeakSimulations._simulation_ID += 1
 
+    @staticmethod
+    def print_results():
+        pass
+
+    def _add_uncertainty(self, results):
+        """
+        Private method to add uncertainty to randomly selected junctions in the WND.
+        """
+        junctions = self.wn.junction_name_list
+        nodes_and_booleans = {junction: np.random.choice([True, False]) for junction in junctions}
+        std_low, std_high = self.wn.uncertainty[0],  self.wn.uncertainty[1]
+        
+        for input_report_variable in self.wn.stored_data_features["input_report_variables"]:
+
+            input_report_variable = input_report_variable.lower()
+            input_report_variable_value_array = results.node[input_report_variable]
+
+            for node in nodes_and_booleans:
+                if nodes_and_booleans[node]:
+                    R_i = np.round(np.random.uniform(low=std_low, high=std_high), 4)
+                    input_report_variable_value_array[node] = input_report_variable_value_array[node].apply(lambda D_i: D_i * (R_i + 1))
+
+            results.node[input_report_variable] = input_report_variable_value_array
+        return results
+
     def _get_random_output_variables(self):
         """
         Returns ID of pipe, Leak Area or Start Time based
@@ -112,7 +137,7 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
         #NOTE Description
         _initial_dataset = self._initialize_internal_datasets()
 
-        with open(Path(os.getcwd(), "LeakDetection", "pickle_files", f"simulation_{self._simulation_ID}.pickle"), "wb") as pickleObj:
+        with open(Path(self.wn.pickle_files_path, f"simulation_{self._simulation_ID}.pickle"), "wb") as pickleObj:
             pickle.dump(self.wn, pickleObj)
 
         for simulation_index in range(self.simulations_per_process):
@@ -122,11 +147,14 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
             sim = wntr.sim.WNTRSimulator(self.wn)
 
             results = sim.run_sim()
+            results = self._add_uncertainty(results,)
             self._arange_dataset_features(_initial_dataset, simulation_index, results, _leak_node)
-            with open(Path(os.getcwd(), "LeakDetection", "pickle_files", f"simulation_{self._simulation_ID}.pickle"), "rb",) as pickleObj:
+
+            with open(Path(self.wn.pickle_files_path, f"simulation_{self._simulation_ID}.pickle"), "rb",) as pickleObj:
                 self.wn = pickle.load(pickleObj)
 
-        return _initial_dataset
+        np.savetxt(Path(self.wn.raw_data_path, f"simulation_{self._simulation_ID}.out"), _initial_dataset, fmt='%.5e')
+        
 
 
 

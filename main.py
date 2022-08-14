@@ -11,9 +11,12 @@ if __name__ == "__main__":
     "sensors": ["JUNCTION-17", "JUNCTION-21", "JUNCTION-68", "JUNCTION-79", "JUNCTION-122"],
 
     "stored_data_features": {        
-        "input_report_variables": ["Pressure", "Demand"],
+        "input_report_variables": ["Pressure"],
         "output_report_variables": ["ID", "Leak Area", "Start Time"]
                 },
+
+    "uncertainty": 5,
+
     "time": {             
         "duration": 24 * 3600,
         "hydraulic_timestep": 60 * 60,
