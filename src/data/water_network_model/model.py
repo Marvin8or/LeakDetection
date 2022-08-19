@@ -36,7 +36,7 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
         else:
             self._set_user_options(_DEFAULT_USER_OPTIONS)
 
-        # user_options.set
+        # user_options.set_options
 
     @property
     def sensors(self):
@@ -75,16 +75,31 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
 
     #TODO generator that sets the user options
 
-    # @dispatch_user_options
-    # set_options
-    def _set_parent_class_options(self, user_options: dict):
+
+    def dispatch_user_options(fn):
+
+        registry = {}
+        def inner(self, usr_opt, opt_type):
+            pass
+
+        def register(self, usr_opt, opt_type):
+            pass
+
+        def set_options():
+            pass
+
+        return inner
+
+
+    @dispatch_user_options
+    def set_options(self, user_options: dict):
         for _option_type in user_options:
             if _option_type in dict(self.options).keys() and len(user_options[_option_type]) != 0:
                 for _option in user_options[_option_type]:
                     self.options.__dict__[_option_type].__dict__[_option] = user_options[_option_type][_option]
 
-    # @dispatch_user_options.register
-    def _set_stored_data_features(self, user_options: dict):
+    @dispatch_user_options.register
+    def _(self, user_options: dict):
         for _option in user_options["stored_data_features"]:
             self._stored_data_features[_option] = list()
             if "out" in user_options["stored_data_features"][_option] and "ID" not in user_options["stored_data_features"][_option]:
@@ -95,8 +110,8 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
                 elif isinstance(user_options["stored_data_features"][_option], list):
                     self._stored_data_features[_option] += user_options["stored_data_features"][_option]
 
-    # @dispatch_user_options.register
-    def _set_uncertainty(self, user_options: dict):
+    @dispatch_user_options.register
+    def _(self, user_options: dict):
         if user_options["uncertainty"]:
             if isinstance(user_options["uncertainty"], list):
                 self._uncertainty = user_options["uncertainty"]
@@ -114,8 +129,8 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
                 else:
                     self._uncertainty = user_options["uncertainty"] = [float(user_options["uncertainty"]), float(user_options["uncertainty"] * -1)]
 
-    # @dispatch_user_options.register
-    def _set_sensors(self, user_options: dict):
+    @dispatch_user_options.register
+    def _(self, user_options: dict):
         if len(user_options["sensors"]) == 0:
             raise SyntaxError("Sensor locations must be specified!")
         else:
@@ -124,16 +139,16 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
                 self.num_sensors += 1
 
 
-    # @dispatch_user_options
-    def _set_user_options(self, user_options: dict):
-        """
-        Private method to set the user options by passing a dictionary
-        """
+    # # @dispatch_user_options
+    # def _set_user_options(self, user_options: dict):
+    #     """
+    #     Private method to set the user options by passing a dictionary
+    #     """
 
-        self._set_parent_class_options(user_options)
-        self._set_uncertainty(user_options)
-        self._set_stored_data_features(user_options)
-        self._set_sensors(user_options)
+    #     self._set_parent_class_options(user_options)
+    #     self._set_uncertainty(user_options)
+    #     self._set_stored_data_features(user_options)
+    #     self._set_sensors(user_options)
         
         
 
