@@ -70,6 +70,9 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
         """
         Private method to add uncertainty to randomly selected junctions in the WND.
         """
+        if self.wn.uncertainty == 0:
+            return results
+            
         junctions = self.wn.junction_name_list
         nodes_and_booleans = {junction: np.random.choice([True, False]) for junction in junctions}
         std_low, std_high = self.wn.uncertainty[0],  self.wn.uncertainty[1]
