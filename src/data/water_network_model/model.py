@@ -41,7 +41,6 @@ def dispatch_user_options(fn):
 
 class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
     #NOTE Description
-    
 
     def __init__(self, inp_file_name: str, number_of_processes: int, user_options=None):
         super().__init__(inp_file_name)
