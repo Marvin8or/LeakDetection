@@ -35,7 +35,7 @@ if __name__ == "__main__":
                                 user_options=user_options
                                 )
     leak_sim = WaterNetworkLeakSimulations(wn,
-                                simulations_per_process=30
+                                simulations_per_process=10
                                 )
 
     #SensorLayoutResults
