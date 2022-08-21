@@ -3,7 +3,7 @@ import os
 import numpy as np
 from pathlib import Path
 from collections import OrderedDict
-
+from functools import singledispatch
 _DEFAULT_USER_OPTIONS = {
 
     "sensors": ["JUNCTION-17", "JUNCTION-21", "JUNCTION-68", "JUNCTION-79", "JUNCTION-122"],
@@ -14,6 +14,30 @@ _DEFAULT_USER_OPTIONS = {
                 },
     "uncertainty": 0
 }
+
+def dispatch_user_options(fn):
+    
+    
+    registry = {}
+    
+    if len(registry) == 0:
+        registry[fn.__name__] = fn
+        
+    def register(fn):
+        registry[fn.__name__] = fn
+        return fn
+    
+    def set_all(self, user_options):
+
+        if not user_options:
+            user_options = _DEFAULT_USER_OPTIONS
+
+        for f in registry.values():
+            f(self, user_options)
+        
+    set_all.register = register
+    
+    return set_all
 
 class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
     #NOTE Description
@@ -30,10 +54,7 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
         self._pickle_files_path = Path(os.getcwd(), "LeakDetection", "pickle_files")
         self._raw_data_path = Path(os.getcwd(), "LeakDetection", "data", "raw")
 
-        if self._user_options:
-            self._set_user_options(self._user_options)
-        else:
-            self._set_user_options(_DEFAULT_USER_OPTIONS)
+        self._set_options(self._user_options)
 
     @property
     def sensors(self):
@@ -69,9 +90,15 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
     def raw_data_path(self):
         #NOTE Description
         return self._raw_data_path
+        
+    @dispatch_user_options
+    def _set_options(self, user_options: dict):
+        for _option_type in user_options:
+            if _option_type in dict(self.options).keys() and len(user_options[_option_type]) != 0:
+                for _option in user_options[_option_type]:
+                    self.options.__dict__[_option_type].__dict__[_option] = user_options[_option_type][_option]
 
-    #TODO generator that sets the user options
-    # @set_user_options
+    @_set_options.register
     def _set_stored_data_features(self, user_options: dict):
         for _option in user_options["stored_data_features"]:
             self._stored_data_features[_option] = list()
@@ -83,9 +110,10 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
                 elif isinstance(user_options["stored_data_features"][_option], list):
                     self._stored_data_features[_option] += user_options["stored_data_features"][_option]
 
-    # @set_user_options
+    @_set_options.register
     def _set_uncertainty(self, user_options: dict):
-        if user_options["uncertainty"]:
+        if "uncertainty" in user_options and user_options["uncertainty"] != 0:
+
             if isinstance(user_options["uncertainty"], list):
                 self._uncertainty = user_options["uncertainty"]
 
@@ -102,7 +130,10 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
                 else:
                     self._uncertainty = user_options["uncertainty"] = [float(user_options["uncertainty"]), float(user_options["uncertainty"] * -1)]
 
-    # @set_user_options
+        else:
+            self._uncertainty = user_options["uncertainty"]
+
+    @_set_options.register
     def _set_sensors(self, user_options: dict):
         if len(user_options["sensors"]) == 0:
             raise SyntaxError("Sensor locations must be specified!")
@@ -111,23 +142,6 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
                 self._sensor_node_reg[_sensor] = self.nodes._data[_sensor]
                 self.num_sensors += 1
 
-    # @set_user_options
-    def _set_parent_class_options(self, user_options: dict):
-        for _option_type in user_options:
-            if _option_type in dict(self.options).keys() and len(user_options[_option_type]) != 0:
-                for _option in user_options[_option_type]:
-                    self.options.__dict__[_option_type].__dict__[_option] = user_options[_option_type][_option]
-
-    # @set_user_options
-    def _set_user_options(self, user_options: dict):
-        """
-        Private method to set the user options by passing a dictionary
-        """
-
-        self._set_parent_class_options(user_options)
-        self._set_uncertainty(user_options)
-        self._set_stored_data_features(user_options)
-        self._set_sensors(user_options)
         
         
 
