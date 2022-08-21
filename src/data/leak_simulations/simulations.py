@@ -131,8 +131,6 @@ class WaterNetworkLeakSimulations(wntr.sim.WNTRSimulator):
 
         return leak_node
 
-
-    # @concurent_function
     def run_leak_sim(self):
         #NOTE Description
         _initial_dataset = self._initialize_internal_datasets()
