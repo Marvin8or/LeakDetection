@@ -3,7 +3,6 @@ import os
 import numpy as np
 from pathlib import Path
 from collections import OrderedDict
-from functools import singledispatch
 _DEFAULT_USER_OPTIONS = {
 
     "sensors": ["JUNCTION-17", "JUNCTION-21", "JUNCTION-68", "JUNCTION-79", "JUNCTION-122"],
@@ -44,7 +43,7 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
 
     def __init__(self, inp_file_name: str, number_of_processes: int, user_options=None):
         super().__init__(inp_file_name)
-        self.num_precesses = number_of_processes
+        self.num_processes = number_of_processes
         self._sensor_node_reg = OrderedDict()
         self.num_sensors = len(self._sensor_node_reg)
         self._user_options = user_options
