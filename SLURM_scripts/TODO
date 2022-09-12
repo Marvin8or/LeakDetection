@@ -1,0 +1,2 @@
+SLURM slurm script generator
+# TODO generate slurm script from CLI

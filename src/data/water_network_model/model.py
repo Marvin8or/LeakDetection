@@ -3,6 +3,7 @@ import os
 import numpy as np
 from pathlib import Path
 from collections import OrderedDict
+
 _DEFAULT_USER_OPTIONS = {
 
     "sensors": ["JUNCTION-17", "JUNCTION-21", "JUNCTION-68", "JUNCTION-79", "JUNCTION-122"],
@@ -15,8 +16,7 @@ _DEFAULT_USER_OPTIONS = {
 }
 
 def dispatch_user_options(fn):
-    
-    
+
     registry = {}
     
     if len(registry) == 0:
@@ -42,6 +42,7 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
     #NOTE Description
 
     def __init__(self, inp_file_name: str, number_of_processes: int, user_options=None):
+
         super().__init__(inp_file_name)
         self.num_processes = number_of_processes
         self._sensor_node_reg = OrderedDict()
@@ -51,6 +52,11 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
         self._pipes_ID_and_diameter = {link_name: np.round(self.get_link(link_name).diameter, 4) for link_name in self.links.pipe_names}
 
         self._pickle_files_path = Path(os.getcwd(), "LeakDetection", "pickle_files")
+
+        # TODO Create directory with specific name so they can be differentiated
+        # 'date_uncertainty_input_report_variables_output_report_variables'
+        # '9122022_0.05_P_IDAST' or '2022912_0.1_PQ_IDA'
+        # TODO copy the user code json to that directory
         self._raw_data_path = Path(os.getcwd(), "LeakDetection", "data", "raw")
 
         self._set_options(self._user_options)
@@ -141,16 +147,4 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
                 self._sensor_node_reg[_sensor] = self.nodes._data[_sensor]
                 self.num_sensors += 1
 
-        
-        
-
-
-
-
-    
-
-    
-        
-
-
-
+__all__ = ["WaterNetworkLeakModel"]

@@ -94,3 +94,6 @@ pickle_files/*
 # All created datasets
 data/raw/*
 !data/raw/.gitkeep
+
+notebooks/*
+!notebooks/.gitkeep

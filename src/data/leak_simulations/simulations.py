@@ -1,9 +1,17 @@
-import os
 import pickle
 import wntr
 import re
-from pathlib import Path
+import logging
+import os
 import numpy as np
+from pathlib import Path
+
+simulations_py_logger = logging.getLogger(__name__)
+simulations_py_logger.setLevel(logging.ERROR)
+simulations_py_formatter = logging.Formatter("%(asctime)s - %(name)s - 	%(process)d - %(message)s")
+simulations_py_file_handler = logging.FileHandler(Path(os.getcwd(), "LeakDetection", "reports", "logs", "simulations.err"))
+simulations_py_file_handler.setFormatter(simulations_py_formatter)
+simulations_py_logger.addHandler(simulations_py_file_handler)
 
 class WaterNetworkLeakSimulations:
 
@@ -20,60 +28,51 @@ class WaterNetworkLeakSimulations:
             
     def __iter__(self):
         return self.WaterNetworkLeakSimulationIterator(self)
-            
-    def log_results(self, sim_indx, leak_node):
-        print("------------------------")
-        print(f"Simulation {sim_indx} results...")
-        print("------------------------")
-        print(f"ID: {leak_node.pipe_name}")
-        print(f"A: {leak_node.leak_area}")
-        print(f"Start Time: {leak_node.leak_start_time}")
-        print("\n")
 
     def _get_random_output_variables(self):
-            """
-            Returns ID of pipe, Leak Area or Start Time based
-            on ther wn.output_report_variables defined by the user
+        """
+        Returns ID of pipe, Leak Area or Start Time based
+        on ther wn.output_report_variables defined by the user
 
-            Intended use:
-            >>> self.wn.output_report_variables
-            ... ("ID", "Leak Area", "Start Time")
-            >>> _leak_node = _get_random_output_variables()
-            >>> _ID = _leak_node.name
-            >>> _ID
-            ... LINK-5
-            >>> _leak_node._leak_area
-            ... 0.75
-            >>> _leak_node._start_time
-            ... 13:25
-            """
-            # get random node to be leak node
-            random_pipe_name = np.random.choice(list(self.wn.pipes_ID_and_diameter.keys()))
-            random_pipe_obj = self.wn.get_link(random_pipe_name)
+        Intended use:
+        >>> self.wn.output_report_variables
+        ... ("ID", "Leak Area", "Start Time")
+        >>> _leak_node = _get_random_output_variables()
+        >>> _ID = _leak_node.name
+        >>> _ID
+        ... LINK-5
+        >>> _leak_node._leak_area
+        ... 0.75
+        >>> _leak_node._start_time
+        ... 13:25
+        """
+        # get random node to be leak node
+        random_pipe_name = np.random.choice(list(self.wn.pipes_ID_and_diameter.keys()))
+        random_pipe_obj = self.wn.get_link(random_pipe_name)
 
-            # XXX cant be hardcoded
-            leak_area_perc = np.round(np.random.uniform(0, 0.8), 4)
-            leak_diameter = np.round(random_pipe_obj.diameter * leak_area_perc, 4)
+        # XXX cant be hardcoded
+        leak_area_perc = np.round(np.random.uniform(0, 0.8), 4)
+        leak_diameter = np.round(random_pipe_obj.diameter * leak_area_perc, 4)
 
-            # XXX the rounding number also not hardcoded
-            leak_area = np.round(np.pi * (leak_diameter / 2) ** 2, 6)
+        # XXX the rounding number also not hardcoded
+        leak_area = np.round(np.pi * (leak_diameter / 2) ** 2, 6)
 
-            self.wn = wntr.morph.split_pipe(
-                self.wn, random_pipe_name, random_pipe_name + "_B", random_pipe_name + "_leak_node"
-            )
+        self.wn = wntr.morph.split_pipe(
+            self.wn, random_pipe_name, random_pipe_name + "_B", random_pipe_name + "_leak_node"
+        )
 
-            duration = self.wn.options.time.duration
-            time_of_failure = np.round(np.random.uniform(0, duration / 3600, 1)[0], 4)
-            leak_node = self.wn.get_node(random_pipe_name + "_leak_node")
-            leak_node.add_leak(
-                self.wn,
-                area=leak_area,
-                start_time=time_of_failure * 3600,
-            )
-            leak_node.pipe_name = random_pipe_name
-            leak_node.leak_start_time = time_of_failure
+        duration = self.wn.options.time.duration
+        time_of_failure = np.round(np.random.uniform(0, duration / 3600, 1)[0], 4)
+        leak_node = self.wn.get_node(random_pipe_name + "_leak_node")
+        leak_node.add_leak(
+            self.wn,
+            area=leak_area,
+            start_time=time_of_failure * 3600,
+        )
+        leak_node.pipe_name = random_pipe_name
+        leak_node.leak_start_time = time_of_failure
 
-            return leak_node
+        return leak_node
 
     def _add_uncertainty(self, results):
             """
@@ -103,22 +102,26 @@ class WaterNetworkLeakSimulations:
 
         def __init__(self, iterable):
             self.iterable = iterable
-            
             self.sim_indx = 0
 
         def __iter__(self):
             return self
         
         def __next__(self):
+
             if self.sim_indx < len(self.iterable):
 
                 sim = wntr.sim.WNTRSimulator(self.iterable.wn)
                 _leak_node = self.iterable._get_random_output_variables()
-                results = sim.run_sim()
-                results = self.iterable._add_uncertainty(results)
 
+                try:
+                    results = sim.run_sim()
+                except ValueError:
+                    simulations_py_logger.exception("Error occured when simulation was runned..")
+
+                results = self.iterable._add_uncertainty(results)
                 results._leak_node = _leak_node
-                self.iterable.log_results(self.sim_indx, results._leak_node)
+                
                 self.sim_indx += 1
                 
                 with open(Path(self.iterable.wn.pickle_files_path, f"simulation_{self.iterable.simulation_id}.pickle"), "rb") as pickleObj:
@@ -179,8 +182,6 @@ class WaterNetworkLeakSimulationsBuilder(wntr.sim.WNTRSimulator):
         #NOTE Description
 
         np.random.seed(seed)
-        # warnings.filterwarnings("error")
-
         _initial_dataset = self._initialize_internal_datasets()
         leak_simulations = WaterNetworkLeakSimulations(self.wn, self.simulations_per_process, simulation_id)
 
@@ -189,4 +190,7 @@ class WaterNetworkLeakSimulationsBuilder(wntr.sim.WNTRSimulator):
 
         print(f"Saving dataset with id: {simulation_id}")
         print(f"Size in bytes: {_initial_dataset.nbytes}")
-        np.savetxt(Path(self.wn.raw_data_path, f"simulation_{simulation_id}.out"), _initial_dataset, fmt='%.5e')
+        np.savetxt(Path(self.wn.raw_data_path, f"simulations_{simulation_id}.out"), _initial_dataset, fmt='%.5e')
+
+
+__all__ = ["WaterNetworkLeakSimulationsBuilder"]

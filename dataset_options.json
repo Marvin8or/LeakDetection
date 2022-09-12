@@ -1,0 +1,25 @@
+{
+    "INP_FILE": "LeakDetection/networks/Example_1.inp", 
+    
+    "sensors": ["JUNCTION-17", "JUNCTION-21", "JUNCTION-68", "JUNCTION-79", "JUNCTION-122"],
+
+    "stored_data_features": {       
+        "input_report_variables": ["Pressure"],
+        "output_report_variables": ["ID", "Leak Area", "Start Time"]
+    },
+
+    "uncertainty": 5,
+
+    "time": {             
+        "duration": 86400,
+        "hydraulic_timestep": 3600,
+        "report_timestep": 3600
+    },
+
+    "hydraulic": {
+        "demand_model": "PDD",
+        "required_pressure": 15.0,
+        "minimum_pressure": 0.0
+    }
+    
+}
