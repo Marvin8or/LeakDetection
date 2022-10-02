@@ -2,6 +2,7 @@ import wntr
 import os
 import numpy as np
 from pathlib import Path
+from datetime import datetime
 from collections import OrderedDict
 
 _DEFAULT_USER_OPTIONS = {
@@ -38,6 +39,37 @@ def dispatch_user_options(fn):
     
     return set_all
 
+def dataset_dir_naming(user_options):
+
+    stored_data_features_abrev = {"input_report_variables": {"Pressure": "P", 
+                                                             "Demand": "D"},
+                                  "output_report_variables": {"ID": "ID",
+                                                              "Leak Area": "A",
+                                                              "Start Time": "ST"}}
+
+
+    directory_name = """"""
+
+    directory_name += datetime.now().date().strftime("%Y%m%d")
+
+    directory_name += "_"
+
+    if "uncertainty" in user_options:
+        directory_name += str(user_options["uncertainty"][1])
+
+    directory_name += "_"
+
+    for report_variables in user_options["stored_data_features"]["input_report_variables"]:
+        directory_name += stored_data_features_abrev["input_report_variables"][report_variables]
+
+    directory_name += "_"
+
+    for report_variables in user_options["stored_data_features"]["output_report_variables"]:
+        directory_name += stored_data_features_abrev["output_report_variables"][report_variables]
+
+    return directory_name
+    
+
 class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
     #NOTE Description
 
@@ -53,13 +85,20 @@ class WaterNetworkLeakModel(wntr.network.WaterNetworkModel):
 
         self._pickle_files_path = Path(os.getcwd(), "LeakDetection", "pickle_files")
 
+        self._set_options(self._user_options)
+
         # TODO Create directory with specific name so they can be differentiated
         # 'date_uncertainty_input_report_variables_output_report_variables'
         # '9122022_0.05_P_IDAST' or '2022912_0.1_PQ_IDA'
         # TODO copy the user code json to that directory
-        self._raw_data_path = Path(os.getcwd(), "LeakDetection", "data", "raw")
+        self.directory_name = dataset_dir_naming(self._user_options)
+        self._raw_data_path = Path(os.getcwd(), "LeakDetection", "data", "raw", self.directory_name)
 
-        self._set_options(self._user_options)
+        if self._raw_data_path.exists():
+            raise IsADirectoryError(f"Directory {self.directory_name} already exists!")
+        else:
+            self._raw_data_path.mkdir()
+
 
     @property
     def sensors(self):
